@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Share</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ═══ Room Selection Screen (shown when no room configured) ═══ -->
+    <div id="roomScreen" class="room-screen">
+        <div class="room-container">
+            <div class="room-logo"><img src="../assets/icon-32@2x.png" alt="Cursor Share" class="logo-icon"></div>
+            <h1 class="room-title">Cursor Share</h1>
+            <p class="room-subtitle">选择一个方式加入团队</p>
+
+            <!-- Server Address (shared between tabs) -->
+            <div class="room-field server-field">
+                <label>服务器地址</label>
+                <input id="serverUrl" type="text" placeholder="ws://192.168.x.x:8080" value="ws://120.48.12.81:8080">
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="room-tabs">
+                <button id="tabCreate" class="room-tab active" data-tab="create">创建房间</button>
+                <button id="tabJoin" class="room-tab" data-tab="join">加入房间</button>
+            </div>
+
+            <!-- Create Room Panel -->
+            <div id="panelCreate" class="room-panel active">
+                <div class="room-field">
+                    <label>团队名称</label>
+                    <input id="createName" type="text" placeholder="例如：前端组" maxlength="20">
+                </div>
+                <div id="createResult" class="room-result hidden">
+                    <div class="room-result-item">
+                        <span class="room-result-label">房间码</span>
+                        <span id="createRoomId" class="room-result-value"></span>
+                    </div>
+                    <div class="room-result-item">
+                        <span class="room-result-label">密码</span>
+                        <span id="createPassword" class="room-result-value"></span>
+                    </div>
+                    <button id="btnCopyRoomInfo" class="btn btn-outline room-btn-small" style="margin-top:8px;width:100%;">📋 一键复制房间信息</button>
+                </div>
+                <button id="btnCreateRoom" class="btn btn-primary room-btn">生成房间</button>
+                <button id="btnEnterCreated" class="btn btn-primary room-btn hidden">进入房间</button>
+            </div>
+
+            <!-- Join Room Panel -->
+            <div id="panelJoin" class="room-panel">
+                <div class="room-field">
+                    <label>房间码</label>
+                    <input id="joinRoomId" type="text" placeholder="输入房间码">
+                </div>
+                <div class="room-field">
+                    <label>密码</label>
+                    <input id="joinPassword" type="text" placeholder="输入密码">
+                </div>
+                <button id="btnJoinRoom" class="btn btn-primary room-btn">加入房间</button>
+            </div>
+
+            <div id="roomError" class="room-error hidden"></div>
+        </div>
+    </div>
+
+    <!-- ═══ Main App (shown after room joined) ═══ -->
+    <div id="mainApp" class="app-container hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <span class="app-logo"><img src="../assets/icon-32@2x.png" alt="" class="header-icon"></span>
+                <span class="app-title">Cursor Share</span>
+            </div>
+            <div class="header-right">
+                <span id="connectionDot" class="connection-dot offline" title="未连接"></span>
+            </div>
+        </header>
+
+        <!-- Room Info Bar -->
+        <div class="room-info-bar">
+            <span>🏠 <span id="roomNameDisplay">--</span></span>
+            <button id="btnSwitchRoom" class="btn-switch-room">切换</button>
+        </div>
+
+        <!-- My Account Section -->
+        <section class="section account-section">
+            <div class="account-info">
+                <div class="account-email">
+                    <span class="label">👤 当前账号</span>
+                    <span id="userEmail" class="value">加载中...</span>
+                </div>
+                <div id="borrowingBadge" class="borrowing-badge hidden">
+                    🔗 正在使用 <span id="borrowingFrom"></span> 的额度
+                </div>
+            </div>
+            <div class="quota-display">
+                <div class="quota-header">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <span class="label">✨ Cursor 额度</span>
+                        <div id="btnRefreshQuota" class="btn-icon" title="刷新额度">
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 1v5h5"/><path d="M3.5 10a5 5 0 1 0 1-7L1 6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <span id="quotaText" class="quota-text">-- / --</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div id="quotaBar" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Team Directory -->
+        <section class="section team-section">
+            <div class="section-header">
+                <span>👥 团队在线</span>
+                <span id="onlineCount" class="online-count">0</span>
+            </div>
+            <div id="teamList" class="team-list">
+                <div class="empty-state">等待连接服务器...</div>
+            </div>
+        </section>
+
+        <!-- Footer Actions -->
+        <footer class="app-footer">
+            <button id="btnRevoke" class="btn btn-danger" title="刷新Token，强制踢出所有借用者">
+                💥 强制踢出
+            </button>
+            <button id="btnRestore" class="btn btn-secondary" title="恢复本地账号，结束借用">
+                🚪 恢复本账号
+            </button>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

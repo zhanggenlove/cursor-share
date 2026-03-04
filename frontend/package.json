@@ -1,0 +1,92 @@
+{
+    "name": "cursor-share",
+    "version": "1.0.0",
+    "description": "Cursor Share — Team Cursor AI Quota Sharing Tool",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "dev": "electron . --dev",
+        "dist": "electron-builder --mac --win",
+        "dist:mac": "electron-builder --mac",
+        "dist:win": "electron-builder --win"
+    },
+    "build": {
+        "appId": "com.cursorshare.app",
+        "productName": "Cursor Share",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "main.js",
+            "preload.js",
+            "renderer/**/*",
+            "lib/**/*",
+            "assets/**/*",
+            "node_modules/**/*"
+        ],
+        "mac": {
+            "category": "public.app-category.developer-tools",
+            "icon": "assets/icon.icns",
+            "target": [
+                "dmg"
+            ]
+        },
+        "dmg": {
+            "title": "安装 Cursor Share",
+            "icon": "assets/icon.icns",
+            "window": {
+                "width": 540,
+                "height": 380
+            },
+            "contents": [
+                {
+                    "x": 130,
+                    "y": 180,
+                    "type": "file"
+                },
+                {
+                    "x": 410,
+                    "y": 180,
+                    "type": "link",
+                    "path": "/Applications"
+                }
+            ]
+        },
+        "win": {
+            "icon": "assets/icon.png",
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": true,
+            "installerIcon": "assets/icon.png",
+            "uninstallerIcon": "assets/icon.png"
+        }
+    },
+    "keywords": [
+        "cursor",
+        "share",
+        "electron",
+        "macos",
+        "windows"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "better-sqlite3": "^11.0.0",
+        "ws": "^8.18.0"
+    },
+    "devDependencies": {
+        "electron": "^33.0.0",
+        "electron-builder": "^25.1.8",
+        "electron-rebuild": "^3.2.9"
+    }
+}

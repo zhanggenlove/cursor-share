@@ -1,0 +1,22 @@
+{
+    "name": "cursor-share-backend",
+    "version": "1.0.0",
+    "description": "Cursor Share — Stateless WebSocket Signaling Server",
+    "main": "src/server.js",
+    "scripts": {
+        "start": "node src/server.js",
+        "dev": "node --watch src/server.js",
+        "test": "node test/mock_client.js"
+    },
+    "keywords": [
+        "cursor",
+        "share",
+        "websocket",
+        "signaling"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "ws": "^8.18.0"
+    }
+}
