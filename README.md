@@ -1,6 +1,16 @@
-# Cursor Share
+<p align="center">
+  <img src="frontend/assets/icon-128@2x.png" width="128" alt="Cursor Share Logo">
+</p>
 
-> 团队 Cursor AI 额度共享工具 — 让团队成员之间安全、高效地共享 Cursor 使用额度。
+<h1 align="center">Cursor Share</h1>
+
+<p align="center">
+  <b>团队 Cursor AI 额度共享工具 — 让团队成员之间安全、高效地共享 Cursor 使用额度。</b>
+</p>
+
+<p align="center">
+  <img src="preview/image1.png" alt="Cursor Share Screenshot" width="800" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+</p>
 
 ## ✨ 功能特性
 
