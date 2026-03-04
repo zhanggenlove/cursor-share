@@ -36,10 +36,10 @@ jobs:
           cd frontend
           npx -y @electron/rebuild
 
-      - name: Build installer
+      - name: Build and Publish Release
         run: |
           cd frontend
-          npm run dist:${{ matrix.platform }}
+          npm run dist:${{ matrix.platform }} -- --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

@@ -14,7 +14,9 @@
     "build": {
         "appId": "com.cursorshare.app",
         "productName": "Cursor Share",
-        "publish": null,
+        "publish": {
+            "provider": "github"
+        },
         "directories": {
             "output": "dist"
         },
