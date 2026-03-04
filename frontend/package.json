@@ -1,6 +1,6 @@
 {
     "name": "cursor-share",
-    "version": "1.0.0",
+    "version": "1.0.8",
     "description": "Cursor Share - Team Cursor AI Quota Sharing Tool",
     "repository": "https://github.com/zhanggenlove/cursor-share",
     "main": "main.js",
@@ -15,7 +15,8 @@
         "appId": "com.cursorshare.app",
         "productName": "Cursor Share",
         "publish": {
-            "provider": "github"
+            "provider": "github",
+            "releaseType": "release"
         },
         "directories": {
             "output": "dist"
