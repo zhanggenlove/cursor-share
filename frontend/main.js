@@ -33,7 +33,7 @@ let wsClient = null;
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 420,
-        height: 580,
+        height: 680,
         show: false,
         frame: false,
         resizable: false,

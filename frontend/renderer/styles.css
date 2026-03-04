@@ -526,8 +526,10 @@ body {
     backdrop-filter: blur(40px) saturate(180%);
     height: 100vh;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    overflow-y: auto;
     border-radius: var(--radius);
     border: 1px solid var(--border);
 }
