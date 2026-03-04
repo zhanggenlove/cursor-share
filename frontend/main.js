@@ -209,6 +209,23 @@ function createTray() {
     };
 
     tray.on('click', () => {
+        if (process.platform === 'win32') {
+            // On Windows, left click toggles window
+            if (mainWindow.isVisible()) {
+                mainWindow.hide();
+            } else {
+                positionWindow();
+                mainWindow.show();
+                mainWindow.focus();
+            }
+        } else {
+            // On macOS, left click shows context menu
+            tray.popUpContextMenu(buildMenu());
+        }
+    });
+
+    tray.on('right-click', () => {
+        // Right click always shows context menu
         tray.popUpContextMenu(buildMenu());
     });
 }
@@ -217,10 +234,38 @@ function positionWindow() {
     const trayBounds = tray.getBounds();
     const windowBounds = mainWindow.getBounds();
 
-    const x = Math.round(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2);
-    const y = Math.round(trayBounds.y + trayBounds.height + 4);
+    // Get the display where the tray icon is located
+    const currentDisplay = screen.getDisplayNearestPoint({ x: trayBounds.x, y: trayBounds.y });
+    const workArea = currentDisplay.workArea;
 
-    mainWindow.setPosition(x, y, false);
+    let x, y;
+
+    if (process.platform === 'win32') {
+        // Handle Windows taskbar positions
+        if (trayBounds.y > workArea.height / 2) {
+            // Taskbar is at the bottom
+            x = Math.max(workArea.x, Math.min(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2, workArea.x + workArea.width - windowBounds.width));
+            y = trayBounds.y - windowBounds.height - 4;
+        } else if (trayBounds.y < workArea.height / 2) {
+            // Taskbar is at the top
+            x = Math.max(workArea.x, Math.min(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2, workArea.x + workArea.width - windowBounds.width));
+            y = trayBounds.y + trayBounds.height + 4;
+        } else if (trayBounds.x < workArea.width / 2) {
+            // Taskbar is on the left
+            x = trayBounds.x + trayBounds.width + 4;
+            y = Math.max(workArea.y, Math.min(trayBounds.y + trayBounds.height / 2 - windowBounds.height / 2, workArea.y + workArea.height - windowBounds.height));
+        } else {
+            // Taskbar is on the right
+            x = trayBounds.x - windowBounds.width - 4;
+            y = Math.max(workArea.y, Math.min(trayBounds.y + trayBounds.height / 2 - windowBounds.height / 2, workArea.y + workArea.height - windowBounds.height));
+        }
+    } else {
+        // macOS menu bar is always at the top
+        x = Math.round(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2);
+        y = Math.round(trayBounds.y + trayBounds.height + 4);
+    }
+
+    mainWindow.setPosition(Math.round(x), Math.round(y), false);
 }
 
 // ─── IPC Handlers ───────────────────────────────────────
