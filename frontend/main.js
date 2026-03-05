@@ -21,6 +21,7 @@ const sqliteOps = require('./lib/sqlite-ops');
 const cursorApi = require('./lib/cursor-api');
 const cryptoUtils = require('./lib/crypto-utils');
 const WSClient = require('./lib/ws-client');
+const { t, setLocale, getLocale } = require('./lib/i18n');
 
 const ROOM_CONFIG_PATH = path.join(os.homedir(), '.cursor-share-config.json');
 
@@ -75,14 +76,14 @@ function getAppIcon() {
 function createTray() {
     const icon = createTrayIcon();
     tray = new Tray(icon);
-    tray.setToolTip('Cursor Share');
+    tray.setToolTip(t('tray.tooltip'));
 
     // Build & show native context menu on click
     const buildMenu = () => {
         const loginSettings = app.getLoginItemSettings();
         return Menu.buildFromTemplate([
             {
-                label: 'Cursor Share',
+                label: t('tray.open'),
                 click: () => {
                     positionWindow();
                     mainWindow.show();
@@ -91,15 +92,15 @@ function createTray() {
             },
             { type: 'separator' },
             {
-                label: '强制踢出（刷新 Token）',
+                label: t('tray.forceKick'),
                 click: async () => {
                     const confirmResult = await dialog.showMessageBox({
                         type: 'warning',
                         icon: getAppIcon(),
-                        title: 'Cursor Share — 强制踢出',
-                        message: '确认要刷新 Token 并踢出所有借用者？',
-                        detail: '将调用 Cursor 服务器刷新 Token，旧 Token 立即失效。',
-                        buttons: ['确认踢出', '取消'],
+                        title: t('tray.forceKick.title'),
+                        message: t('tray.forceKick.message'),
+                        detail: t('tray.forceKick.detail'),
+                        buttons: [t('tray.forceKick.confirm'), t('tray.forceKick.cancel')],
                     });
                     if (confirmResult.response !== 0) return;
                     const sqliteOps = require('./lib/sqlite-ops');
@@ -113,24 +114,24 @@ function createTray() {
                             type: 'info',
                             icon: getAppIcon(),
                             title: 'Cursor Share',
-                            message: '强制踢出成功 ✅',
-                            detail: 'Token 已刷新，旧 Token 在 Cursor 服务器端已失效。重启 Cursor 后使用新 Token。',
-                            buttons: ['我知道了'],
+                            message: t('tray.forceKick.success'),
+                            detail: t('tray.forceKick.successDetail'),
+                            buttons: [t('tray.forceKick.ok')],
                         });
                     } catch (e) {
                         dialog.showMessageBox({
                             type: 'error',
                             icon: getAppIcon(),
-                            title: 'Cursor Share',
-                            message: '强制踢出失败',
+                            title: t('tray.forceKick.failTitle'),
+                            message: t('tray.forceKick.failMessage'),
                             detail: e.message,
-                            buttons: ['确定'],
+                            buttons: [t('tray.forceKick.failOk')],
                         });
                     }
                 },
             },
             {
-                label: '恢复本账号',
+                label: t('tray.restore'),
                 click: async () => {
                     const sqliteOps = require('./lib/sqlite-ops');
                     if (!sqliteOps.hasBackup()) {
@@ -138,19 +139,19 @@ function createTray() {
                             type: 'info',
                             icon: getAppIcon(),
                             title: 'Cursor Share',
-                            message: '当前没有借用记录',
-                            detail: '你正在使用自己的账号，无需恢复。',
-                            buttons: ['确定'],
+                            message: t('tray.restore.noBorrow'),
+                            detail: t('tray.restore.noBorrowDetail'),
+                            buttons: [t('dialog.ok')],
                         });
                         return;
                     }
                     const confirmResult = await dialog.showMessageBox({
                         type: 'warning',
                         icon: getAppIcon(),
-                        title: 'Cursor Share — 恢复账号',
-                        message: '确认要恢复自己的账号？',
-                        detail: '这将恢复你的原始 Token，之前分发的 Token 将失效。',
-                        buttons: ['确认恢复', '取消'],
+                        title: t('tray.restore.title'),
+                        message: t('tray.restore.message'),
+                        detail: t('tray.restore.detail'),
+                        buttons: [t('tray.restore.confirm'), t('tray.forceKick.cancel')],
                     });
                     if (confirmResult.response !== 0) return;
                     try {
@@ -159,25 +160,25 @@ function createTray() {
                             type: 'info',
                             icon: getAppIcon(),
                             title: 'Cursor Share',
-                            message: '账号已恢复 ✅',
-                            detail: '你的原始 Token 已写回，重启 Cursor 后生效。',
-                            buttons: ['我知道了'],
+                            message: t('tray.restore.success'),
+                            detail: t('tray.restore.successDetail'),
+                            buttons: [t('tray.forceKick.ok')],
                         });
                     } catch (e) {
                         dialog.showMessageBox({
                             type: 'error',
                             icon: getAppIcon(),
                             title: 'Cursor Share',
-                            message: '恢复失败',
+                            message: t('tray.restore.failMessage'),
                             detail: e.message,
-                            buttons: ['确定'],
+                            buttons: [t('dialog.ok')],
                         });
                     }
                 },
             },
             { type: 'separator' },
             {
-                label: '开机自启动',
+                label: t('tray.autoStart'),
                 type: 'checkbox',
                 checked: loginSettings.openAtLogin,
                 click: (menuItem) => {
@@ -185,21 +186,21 @@ function createTray() {
                 },
             },
             {
-                label: '关于',
+                label: t('tray.about'),
                 click: () => {
                     dialog.showMessageBox({
                         type: 'info',
                         icon: getAppIcon(),
-                        title: '关于 Cursor Share',
-                        message: 'Cursor Share v1.0',
-                        detail: '团队 Cursor 额度共享工具\n\n让团队成员之间安全地共享 Cursor AI 额度。',
-                        buttons: ['确定'],
+                        title: t('tray.about.title'),
+                        message: t('tray.about.message'),
+                        detail: t('tray.about.detail'),
+                        buttons: [t('dialog.ok')],
                     });
                 },
             },
             { type: 'separator' },
             {
-                label: '退出 Cursor Share',
+                label: t('tray.quit'),
                 click: () => {
                     app.isQuitting = true;
                     app.quit();
@@ -271,6 +272,11 @@ function positionWindow() {
 // ─── IPC Handlers ───────────────────────────────────────
 
 function setupIPC() {
+    // Locale
+    ipcMain.handle('get-locale', async () => {
+        return { ok: true, data: getLocale() };
+    });
+
     // SQLite
     ipcMain.handle('get-credentials', async () => {
         try {
@@ -431,7 +437,7 @@ function setupIPC() {
             title: options.title || 'Cursor Share',
             message: options.message || '',
             detail: options.detail || '',
-            buttons: options.buttons || ['确定'],
+            buttons: options.buttons || [t('dialog.ok')],
             defaultId: 0,
             icon: getAppIcon(),
         });
@@ -502,6 +508,9 @@ function setupIPC() {
 // ─── App Lifecycle ──────────────────────────────────────
 
 app.whenReady().then(() => {
+    // Auto-detect system locale and configure i18n
+    setLocale(app.getLocale());
+
     // Hide dock icon — menu bar only app
     if (app.dock) app.dock.hide();
 

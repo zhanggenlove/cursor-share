@@ -7,6 +7,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+    // Locale
+    getLocale: () => ipcRenderer.invoke('get-locale'),
+
     // SQLite operations
     getCredentials: () => ipcRenderer.invoke('get-credentials'),
     getUsage: () => ipcRenderer.invoke('get-usage'),

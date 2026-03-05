@@ -107,5 +107,5 @@ console.log('║   Mode:   🏠 Room-based isolation           ║');
 console.log('║   Status: ✅ Ready                           ║');
 console.log('╚══════════════════════════════════════════════╝');
 console.log('');
-console.log(`👉 同事请连接: ws://${localIP}:${PORT}`);
+console.log(`👉 Teammates connect at: ws://${localIP}:${PORT}`);
 console.log('');

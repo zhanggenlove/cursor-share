@@ -1,6 +1,6 @@
 {
     "name": "cursor-share",
-    "version": "1.0.8",
+    "version": "1.1.0",
     "description": "Cursor Share - Team Cursor AI Quota Sharing Tool",
     "repository": "https://github.com/zhanggenlove/cursor-share",
     "main": "main.js",
@@ -37,7 +37,7 @@
             ]
         },
         "dmg": {
-            "title": "安装 Cursor Share",
+            "title": "Install Cursor Share",
             "icon": "assets/icon.icns",
             "window": {
                 "width": 540,

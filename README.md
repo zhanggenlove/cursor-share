@@ -5,143 +5,147 @@
 <h1 align="center">Cursor Share</h1>
 
 <p align="center">
-  <b>团队 Cursor AI 额度共享工具 — 让团队成员之间安全、高效地共享 Cursor 使用额度。</b>
+  <b>Team Cursor AI Quota Sharing Tool — Securely and efficiently share Cursor usage quota among team members.</b>
+</p>
+
+<p align="center">
+  <a href="README_zh.md">🇨🇳 中文文档</a>
 </p>
 
 <p align="center">
   <img src="preview/image1.png" alt="Cursor Share Screenshot" width="800" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
 </p>
 
-## ✨ 功能特性
+## ✨ Features
 
-### 🏠 房间隔离
-- 创建独立房间，每个团队拥有私密的共享空间
-- 房间码 + 密码双重验证，防止非授权访问
-- 支持创建 / 加入 / 切换不同团队房间
+### 🏠 Room Isolation
+- Create independent rooms with private sharing spaces for each team
+- Room code + password dual verification to prevent unauthorized access
+- Support for creating / joining / switching between different team rooms
 
-### 🔐 端到端加密传输
-- 借用者在发起申请时，在本地生成 RSA 密钥对
-- 出借者使用借用者的**公钥加密** Token 后通过 WebSocket 传输
-- 只有借用者持有的**私钥**才能解密，服务端和中间人均无法获取明文 Token
+### 🔐 End-to-End Encrypted Transfer
+- Borrower generates an RSA key pair locally when initiating a request
+- Lender encrypts the Token using the borrower's **public key** before WebSocket transfer
+- Only the borrower's **private key** can decrypt — servers and intermediaries cannot access the plaintext Token
 
-### 🔄 一键借用 / 归还
-- **自动备份**：申请借用前自动保存你原始的 Token
-- **自动恢复**：归还额度时一键恢复你的原始账号
-- **无感切换**：重启 Cursor 即生效，无需重新登录
+### 🔄 One-Click Borrow / Return
+- **Auto backup**: Your original Token is automatically saved before borrowing
+- **Auto restore**: One-click restore of your original account when returning
+- **Seamless switch**: Takes effect after restarting Cursor, no re-login needed
 
-### �️ 强制踢出（Token 真实刷新）
-- 调用 Cursor 官方 Token Refresh API 刷新 Token
-- 旧 Token 在 **Cursor 服务器端立即失效**，即使借用者离线/关闭 App 也无法继续使用
-- 在线时同步通知借用者恢复自己的账号
-- 支持在房间内、托盘菜单等任意场景触发
+### 🛡️ Force Kick (Real Token Refresh)
+- Calls Cursor's official Token Refresh API to refresh the Token
+- Old Token **immediately invalidated on Cursor servers** — even if the borrower is offline or has closed the app
+- Online borrowers are notified to restore their own account
+- Can be triggered from the room, tray menu, or any other location
 
-### 📊 额度实时监控
-- 实时展示团队成员剩余使用次数（每 5 分钟自动刷新）
-- 手动刷新按钮随时查看最新额度
-- 进度条可视化展示额度消耗情况
+### 📊 Real-Time Quota Monitoring
+- Real-time display of team members' remaining usage (auto-refreshes every 5 minutes)
+- Manual refresh button to check latest quota anytime
+- Progress bar visualization of quota consumption
 
-### 🖥️ 跨平台支持
-- macOS（`.dmg` 安装包）
-- Windows（`.exe` 安装包 / NSIS 安装向导）
-- 托盘菜单常驻，不占任务栏空间
+### 🖥️ Cross-Platform Support
+- macOS (`.dmg` installer)
+- Windows (`.exe` installer / NSIS setup wizard)
+- Resides in the tray, doesn't take up taskbar space
 
 ---
 
-## 🔒 安全机制
+## 🔒 Security Mechanism
 
-Cursor Share 的核心设计原则是：**Token 绝不以明文经过任何第三方**。
+Cursor Share's core design principle: **Token never passes through any third party in plaintext.**
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                       安全传输流程                                │
+│                    Secure Transfer Flow                          │
 │                                                                  │
-│  借用者（Alice）                    出借者（Bob）                  │
+│  Borrower (Alice)                    Lender (Bob)                │
 │  ─────────────────                ─────────────────              │
-│  1. 生成 RSA 密钥对               5. 用 Alice 的公钥             │
-│     publicKey + privateKey            加密自己的 Token            │
+│  1. Generate RSA key pair          5. Encrypt own Token          │
+│     publicKey + privateKey            with Alice's public key    │
 │                                                                  │
-│  2. 发送申请 + publicKey ──────▶  收到申请                       │
-│                                   3. 弹窗确认：同意/拒绝          │
-│                                   4. 点击「同意」                 │
+│  2. Send request + publicKey ──────▶  Receive request            │
+│                                   3. Popup: Approve/Reject       │
+│                                   4. Click "Approve"             │
 │                                                                  │
-│  7. 用 privateKey 解密   ◀────── 6. 发送加密后的 Token           │
-│  8. 写入本地 Cursor DB                                           │
-│  9. 重启 Cursor 生效                                             │
+│  7. Decrypt with privateKey ◀────── 6. Send encrypted Token      │
+│  8. Write to local Cursor DB                                     │
+│  9. Restart Cursor to activate                                   │
 │                                                                  │
-│  ⚠️ 服务端只转发加密数据，无法解密 Token                          │
+│  ⚠️ Server only relays encrypted data, cannot decrypt Token      │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-### Token 生命周期管理
+### Token Lifecycle Management
 
-| 环节 | 安全措施 |
+| Phase | Security Measure |
 |---|---|
-| **传输** | RSA 公钥加密，服务端不可见 |
-| **存储** | Token 仅写入本地 SQLite，不上传服务器 |
-| **服务端** | 纯内存运行，无数据库、不存储任何信息，重启即清空 |
-| **备份** | 借用前自动备份原始 Token 到本地文件 |
-| **回收** | 调用 Cursor 官方 API 刷新 Token，旧 Token 服务器端失效 |
-| **恢复** | 一键恢复原始 Token，支持从托盘菜单触发 |
+| **Transfer** | RSA public key encryption, invisible to server |
+| **Storage** | Token only written to local SQLite, never uploaded |
+| **Server** | Pure in-memory operation, no database, stores nothing, cleared on restart |
+| **Backup** | Original Token automatically backed up locally before borrowing |
+| **Revocation** | Calls Cursor's official API to refresh Token, old Token invalidated server-side |
+| **Restore** | One-click restore of original Token, also available from tray menu |
 
 ---
 
-## 🔁 完整使用流程
+## 🔁 Complete Usage Flow
 
 ```mermaid
 flowchart TD
-    A[启动 Cursor Share] --> B{首次使用?}
-    B -->|是| C[创建房间 → 获取房间码+密码]
-    B -->|否| D[加入已有房间]
-    C --> E[📋 一键复制房间信息分享给团队]
-    E --> F[进入房间]
+    A[Launch Cursor Share] --> B{First time?}
+    B -->|Yes| C[Create room → Get room code + password]
+    B -->|No| D[Join existing room]
+    C --> E[📋 Copy room info to share with team]
+    E --> F[Enter room]
     D --> F
 
-    F --> G[查看团队在线成员和额度]
+    F --> G[View team online members and quota]
 
-    G --> H{需要额度?}
-    H -->|是| I[点击「申请」借用他人额度]
-    I --> J[对方收到通知：同意/拒绝]
-    J -->|同意| K[Token 加密传输 → 写入本地]
-    K --> L[重启 Cursor 生效]
+    G --> H{Need quota?}
+    H -->|Yes| I[Click "Borrow" to request quota]
+    I --> J[Other party receives notification: Approve/Reject]
+    J -->|Approve| K[Token encrypted transfer → Written locally]
+    K --> L[Restart Cursor to activate]
 
-    H -->|否| M{有人借用你的额度?}
-    M -->|是| N{需要收回?}
-    N -->|是| O[强制踢出 → 刷新Token → 旧Token失效]
-    N -->|否| P[继续共享]
+    H -->|No| M{Someone borrowing your quota?}
+    M -->|Yes| N{Need to revoke?}
+    N -->|Yes| O[Force Kick → Refresh Token → Old Token invalidated]
+    N -->|No| P[Continue sharing]
 
-    L --> Q[使用完毕 → 恢复本账号]
-    Q --> R[原始Token写回 → 重启Cursor]
+    L --> Q[Done → Restore your account]
+    Q --> R[Original Token written back → Restart Cursor]
 ```
 
-### 强制踢出流程
+### Force Kick Flow
 
 ```mermaid
 sequenceDiagram
-    participant U as 用户
+    participant U as User
     participant App as Cursor Share
-    participant API as Cursor 服务器
-    participant DB as 本地 SQLite
+    participant API as Cursor Server
+    participant DB as Local SQLite
     participant WS as WebSocket
 
-    U->>App: 点击「强制踢出」
-    App->>DB: 读取 refreshToken
+    U->>App: Click "Force Kick"
+    App->>DB: Read refreshToken
     App->>API: POST /oauth/token (refresh_token)
-    API-->>App: 新 access_token ✅
-    Note over API: 旧 Token 立即失效
-    App->>DB: 写入新 accessToken
-    App-->>WS: 通知借用者（best effort）
-    App->>U: 提示：Token 已刷新，重启 Cursor 生效
+    API-->>App: New access_token ✅
+    Note over API: Old Token immediately invalidated
+    App->>DB: Write new accessToken
+    App-->>WS: Notify borrowers (best effort)
+    App->>U: Prompt: Token refreshed, restart Cursor to take effect
 ```
 
 ---
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 1. 启动后端服务
+### 1. Start the Backend Service
 
-后端只需部署在**一台服务器**上（推荐使用云服务器，保证所有团队成员可访问）。
+The backend only needs to be deployed on **one server** (recommended: cloud server accessible to all team members).
 
-> 💡 后端是**纯信令转发服务**，无数据库、不存储任何用户数据，所有状态仅在内存中存在，服务重启即清空。
+> 💡 The backend is a **pure signaling relay service** — no database, no stored user data. All state exists only in memory and is cleared on restart.
 
 ```bash
 cd backend
@@ -149,7 +153,7 @@ npm install
 npm start
 ```
 
-启动后会显示 LAN 地址：
+After starting, the LAN address will be displayed:
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║   Cursor Share Signaling Server  v2.0                       ║
@@ -157,97 +161,104 @@ npm start
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-### 2. 启动客户端
+### 2. Start the Client
 
-每个团队成员在自己电脑上执行：
+Each team member runs on their own computer:
 
 ```bash
 cd frontend
 npm install
-npx -y @electron/rebuild   # 编译 better-sqlite3 原生模块
+npx -y @electron/rebuild   # Compile better-sqlite3 native module
 npm start
 ```
 
-### 3. 连接使用
+### 3. Connect and Use
 
-1. 在「服务器地址」输入框填入后端地址（如 `ws://120.48.12.81:8080`）
-2. **创建房间**：输入团队名称 → 生成房间码和密码 → 一键复制分享给团队
-3. **加入房间**：输入房间码 + 密码 → 进入房间
-4. 查看团队成员在线状态和额度 → 发起借用申请
+1. Enter the backend address in the "Server Address" field (e.g. `ws://120.48.12.81:8080`)
+2. **Create Room**: Enter team name → Generate room code and password → Copy and share with team
+3. **Join Room**: Enter room code + password → Enter room
+4. View team member online status and quota → Initiate borrow request
 
 ---
 
-## 📦 打包分发
+## 📦 Build & Distribute
 
-生成可分发的安装包：
+Generate distributable installers:
 
 ```bash
 cd frontend
 
 # macOS
-npm run dist:mac    # 生成 .dmg
+npm run dist:mac    # Generate .dmg
 
 # Windows
-npm run dist:win    # 生成 .exe 安装包
+npm run dist:win    # Generate .exe installer
 
-# 同时打包所有平台
+# All platforms
 npm run dist
 ```
 
-打包结果在 `frontend/dist/` 目录。
+Build output is in the `frontend/dist/` directory.
 
 ---
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 cursor-share/
-├── backend/                  # WebSocket 信令服务器（无数据库，纯内存）
+├── backend/                  # WebSocket signaling server (no database, pure memory)
 │   └── src/
-│       ├── server.js            # 入口，WS 连接管理
-│       ├── handlers.js          # 消息处理逻辑
-│       ├── state.js             # 内存状态管理（不落盘）
-│       ├── broadcast.js         # 广播工具
-│       └── heartbeat.js         # 心跳检测
-├── frontend/                 # Electron 桌面客户端
-│   ├── main.js                  # 主进程（Tray, IPC, 窗口）
-│   ├── preload.js               # 安全桥接（Context Bridge）
+│       ├── server.js            # Entry point, WS connection management
+│       ├── handlers.js          # Message handling logic
+│       ├── state.js             # In-memory state management (not persisted)
+│       ├── broadcast.js         # Broadcast utilities
+│       └── heartbeat.js         # Heartbeat detection
+├── frontend/                 # Electron desktop client
+│   ├── main.js                  # Main process (Tray, IPC, Window)
+│   ├── preload.js               # Security bridge (Context Bridge)
 │   ├── renderer/
-│   │   ├── index.html           # UI 结构
-│   │   ├── styles.css           # 样式（暗色主题）
-│   │   └── app.js               # 渲染进程逻辑
+│   │   ├── index.html           # UI structure
+│   │   ├── styles.css           # Styles (dark theme)
+│   │   └── app.js               # Renderer process logic
 │   ├── lib/
-│   │   ├── sqlite-ops.js        # SQLite CRUD + Token 备份/恢复
-│   │   └── cursor-api.js        # Cursor API（额度查询 + Token 刷新）
-│   └── assets/                  # 图标资源 (.png, .icns)
+│   │   ├── i18n.js              # Internationalization (en/zh)
+│   │   ├── sqlite-ops.js        # SQLite CRUD + Token backup/restore
+│   │   └── cursor-api.js        # Cursor API (quota query + Token refresh)
+│   └── assets/                  # Icon resources (.png, .icns)
 └── README.md
 ```
 
 ---
 
-## 💻 系统要求
+## 🌐 Internationalization
 
-- **Node.js** ≥ 18
-- **Cursor** 已安装并登录
-- 团队成员可以访问到后端服务器（同一局域网或公网服务器）
+Cursor Share supports **English** (default) and **Chinese**. The language is automatically detected from your system locale. All UI elements, dialogs, notifications, and tray menus are translated.
 
 ---
 
-## ❓ 常见问题
+## 💻 System Requirements
 
-**Q: Windows 上 `npm install` 报错？**
-A: 需要安装 C++ 编译工具：`npm install --global windows-build-tools`
+- **Node.js** ≥ 18
+- **Cursor** installed and logged in
+- Team members must have access to the backend server (same LAN or public server)
 
-**Q: 启动时提示"数据库文件不存在"？**
-A: 确保已安装并登录过 Cursor。数据库路径：
+---
+
+## ❓ FAQ
+
+**Q: `npm install` fails on Windows?**
+A: You need to install C++ build tools: `npm install --global windows-build-tools`
+
+**Q: "Database file not found" error on startup?**
+A: Make sure Cursor is installed and you've logged in at least once. Database path:
 - macOS: `~/Library/Application Support/Cursor/User/globalStorage/state.vscdb`
 - Windows: `%APPDATA%\Cursor\User\globalStorage\state.vscdb`
 
-**Q: 连接不上服务器？**
-A: 检查防火墙是否允许 8080 端口；如果使用云服务器，确认安全组已开放端口。
+**Q: Can't connect to the server?**
+A: Check if your firewall allows port 8080. If using a cloud server, make sure the security group has the port open.
 
-**Q: 强制踢出后借用者还能用吗？**
-A: 不能。强制踢出会调用 Cursor 官方 API 刷新你的 Token，旧 Token 在 Cursor 服务器端直接失效，无论借用者在不在线都无法继续使用。
+**Q: Can the borrower still use it after Force Kick?**
+A: No. Force Kick calls Cursor's official API to refresh your Token. The old Token is immediately invalidated on Cursor servers, regardless of whether the borrower is online or not.
 
-**Q: Token 会被服务器看到吗？**
-A: 不会。Token 在借用者本地使用 RSA 公钥加密后传输，服务端只负责转发加密数据，无法解密。
+**Q: Can the server see the Token?**
+A: No. The Token is encrypted with the borrower's RSA public key locally before transfer. The server only relays encrypted data and cannot decrypt it.

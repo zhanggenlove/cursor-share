@@ -4,6 +4,9 @@
  * Orchestrates: room selection → credentials loading → WS connect → UI updates
  */
 
+// i18n is loaded via <script> tag before this file (../lib/i18n.js)
+// Available globals: t, setLocale, getLocale
+
 // Server URL is configurable from the room screen UI
 
 // ─── State ──────────────────────────────────────────────
@@ -51,6 +54,7 @@ const el = {
     connectionDot: document.getElementById('connectionDot'),
     userEmail: document.getElementById('userEmail'),
     borrowingBadge: document.getElementById('borrowingBadge'),
+    borrowingBadgeText: document.getElementById('borrowingBadgeText'),
     borrowingFrom: document.getElementById('borrowingFrom'),
     quotaText: document.getElementById('quotaText'),
     quotaBar: document.getElementById('quotaBar'),
@@ -60,6 +64,22 @@ const el = {
     btnRestore: document.getElementById('btnRestore'),
     btnRefreshQuota: document.getElementById('btnRefreshQuota'),
 };
+
+// ─── i18n Helper: Apply translations to data-i18n elements ──
+function applyI18n() {
+    // Text content
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    // Placeholders
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+    // Titles (tooltips)
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        el.title = t(el.getAttribute('data-i18n-title'));
+    });
+}
 
 // ─── Room Selection Logic ───────────────────────────────
 
@@ -85,7 +105,7 @@ function setupRoomScreen() {
     el.btnCreateRoom.addEventListener('click', () => {
         const name = el.createName.value.trim();
         if (!name) {
-            showRoomError('请输入团队名称');
+            showRoomError(t('room.errorName'));
             return;
         }
         const slug = name.toLowerCase().replace(/\s+/g, '-');
@@ -108,10 +128,10 @@ function setupRoomScreen() {
         const serverUrl = el.serverUrl.value.trim();
         const roomId = el.createRoomId.textContent;
         const password = el.createPassword.textContent;
-        const text = `您的团队正在使用 Cursor Share 共享额度，以下是房间信息：\n服务器地址：${serverUrl}\n房间码：${roomId}\n密码：${password}\n请不要随意分享给别人，仅供团队内部使用`;
+        const text = t('room.copyText', { serverUrl, roomId, password });
         navigator.clipboard.writeText(text).then(() => {
-            el.btnCopyRoomInfo.textContent = '✅ 已复制';
-            setTimeout(() => { el.btnCopyRoomInfo.textContent = '📋 一键复制房间信息'; }, 2000);
+            el.btnCopyRoomInfo.textContent = t('room.copied');
+            setTimeout(() => { el.btnCopyRoomInfo.textContent = t('room.copyBtn'); }, 2000);
         });
     });
 
@@ -125,7 +145,7 @@ function setupRoomScreen() {
         const roomId = el.joinRoomId.value.trim();
         const password = el.joinPassword.value.trim();
         if (!roomId || !password) {
-            showRoomError('请填写房间码和密码');
+            showRoomError(t('room.errorFields'));
             return;
         }
         enterRoom(roomId, password);
@@ -135,10 +155,10 @@ function setupRoomScreen() {
     el.btnSwitchRoom.addEventListener('click', async () => {
         const result = await window.api.showDialog({
             type: 'warning',
-            title: 'Cursor Share — 切换房间',
-            message: '确认要离开当前房间？',
-            detail: '你将断开连接并返回房间选择界面。',
-            buttons: ['确认切换', '取消'],
+            title: t('room.switch.title'),
+            message: t('room.switch.message'),
+            detail: t('room.switch.detail'),
+            buttons: [t('room.switch.confirm'), t('tray.forceKick.cancel')],
         });
         if (result.data !== 0) return;
 
@@ -189,6 +209,13 @@ async function enterRoom(roomId, password) {
 
 // ─── Init ───────────────────────────────────────────────
 async function init() {
+    // 0. Detect locale from main process and apply translations
+    const localeResult = await window.api.getLocale();
+    if (localeResult.ok) {
+        setLocale(localeResult.data);
+    }
+    applyI18n();
+
     setupRoomScreen();
 
     // 1. Load credentials
@@ -199,12 +226,12 @@ async function init() {
         // Use unique connection ID to avoid collisions when two users share the same Cursor userId
         const suffix = Math.random().toString(36).substring(2, 6);
         state.myId = credResult.data.userId + '_' + suffix;
-        el.userEmail.textContent = state.myEmail || '未知';
+        el.userEmail.textContent = state.myEmail || t('app.unknownUser');
     } else {
         const randomSuffix = Math.random().toString(36).substring(2, 6);
         state.myId = 'guest_' + randomSuffix;
         state.myEmail = 'guest_' + randomSuffix + '@unknown';
-        el.userEmail.textContent = state.myEmail + ' (未检测到 Cursor)';
+        el.userEmail.textContent = state.myEmail + ' ' + t('app.cursorNotDetected');
     }
 
     // 2. Check saved room config
@@ -233,7 +260,7 @@ async function startApp() {
     if (backupResult.ok && backupResult.data) {
         state.isBorrowing = true;
         el.borrowingBadge.classList.remove('hidden');
-        el.borrowingFrom.textContent = '(已存档)';
+        el.borrowingFrom.textContent = t('app.borrowed');
     }
 
     // 3. Setup WS listeners BEFORE connecting
@@ -282,7 +309,7 @@ async function refreshQuota() {
 function handleWsStatus(status) {
     if (status === 'connected') {
         el.connectionDot.className = 'connection-dot online';
-        el.connectionDot.title = '已连接';
+        el.connectionDot.title = t('app.connected');
 
         // JOIN with roomId + password
         window.api.wsSend('JOIN', {
@@ -294,7 +321,7 @@ function handleWsStatus(status) {
         });
     } else {
         el.connectionDot.className = 'connection-dot offline';
-        el.connectionDot.title = '未连接';
+        el.connectionDot.title = t('app.disconnected');
     }
 }
 
@@ -328,13 +355,13 @@ function handleWsMessage(msg) {
             handleKickedOut(msg.payload);
             break;
         case 'REQUEST_FAILED':
-            showToast('请求失败: ' + msg.payload.reason, 'error');
+            showToast(t('toast.requestFailed', { reason: msg.payload.reason }), 'error');
             break;
         case 'DONOR_OFFLINE':
-            window.api.showNotification('Cursor Share', `${msg.payload.donor_email} 已离线，但借用仍有效`);
+            window.api.showNotification('Cursor Share', t('notify.donorOffline', { email: msg.payload.donor_email }));
             break;
         case 'BORROWER_OFFLINE':
-            window.api.showNotification('Cursor Share', `${msg.payload.borrower_email} 已离线`);
+            window.api.showNotification('Cursor Share', t('notify.borrowerOffline', { email: msg.payload.borrower_email }));
             break;
     }
 }
@@ -347,7 +374,7 @@ async function handleJoinFailed(payload) {
     state.roomPassword = null;
     state.appStarted = false;
     showRoomScreen();
-    showRoomError(payload.reason || '加入房间失败');
+    showRoomError(payload.reason || t('room.joinFailed'));
 }
 
 // ─── SYNC_LIST: Update team directory ───────────────────
@@ -367,7 +394,7 @@ function renderTeamList() {
     el.onlineCount.textContent = list.length;
 
     if (list.length === 0) {
-        el.teamList.innerHTML = '<div class="empty-state">暂无其他在线成员</div>';
+        el.teamList.innerHTML = `<div class="empty-state">${t('app.noMembers')}</div>`;
         return;
     }
 
@@ -378,20 +405,20 @@ function renderTeamList() {
         const card = document.createElement('div');
         card.className = 'member-card' + (isSelf ? ' is-self' : '');
 
-        const emailDisplay = member.email || '未知用户';
+        const emailDisplay = member.email || t('app.unknownUser');
         const quotaDisplay = member.quota != null ? member.quota : '--';
         const sharingTag = member.using_count > 0
-            ? `<span class="sharing-tag">共享中: ${member.using_count}人</span>`
+            ? `<span class="sharing-tag">${t('team.sharing', { count: member.using_count })}</span>`
             : '';
         const borrowingTag = member.using_from
-            ? `<span class="sharing-tag">🔗 借用中</span>`
+            ? `<span class="sharing-tag">${t('team.borrowing')}</span>`
             : '';
 
         card.innerHTML = `
             <div class="member-info">
                 <span class="member-email">${isSelf ? '⭐ ' : ''}${emailDisplay}</span>
                 <div class="member-meta">
-                    <span class="member-quota">剩余: ${quotaDisplay}</span>
+                    <span class="member-quota">${t('team.remaining', { quota: quotaDisplay })}</span>
                     ${sharingTag}
                     ${borrowingTag}
                 </div>
@@ -404,10 +431,10 @@ function renderTeamList() {
             const requestBar = document.createElement('div');
             requestBar.className = 'inline-request';
             requestBar.innerHTML = `
-                <span class="inline-request-text">申请借用你的额度</span>
+                <span class="inline-request-text">${t('team.requestLabel')}</span>
                 <div class="inline-request-actions">
-                    <button class="btn-approve">同意</button>
-                    <button class="btn-reject">拒绝</button>
+                    <button class="btn-approve">${t('team.approveBtn')}</button>
+                    <button class="btn-reject">${t('team.rejectBtn')}</button>
                 </div>
             `;
             requestBar.querySelector('.btn-approve').addEventListener('click', () => approveBorrow(member.id));
@@ -417,7 +444,7 @@ function renderTeamList() {
         } else if (!isSelf && !state.isBorrowing) {
             const btn = document.createElement('button');
             btn.className = 'btn-borrow';
-            btn.textContent = '申请';
+            btn.textContent = t('team.borrowBtn');
             btn.addEventListener('click', () => requestBorrow(member.id));
             card.appendChild(btn);
         }
@@ -430,7 +457,7 @@ function renderTeamList() {
 async function requestBorrow(targetId) {
     const kpResult = await window.api.generateKeyPair();
     if (!kpResult.ok) {
-        showToast('密钥生成失败', 'error');
+        showToast(t('toast.keygenFail'), 'error');
         return;
     }
 
@@ -441,7 +468,7 @@ async function requestBorrow(targetId) {
         pub_key: kpResult.data.publicKey,
     });
 
-    showToast('借用请求已发送，等待对方确认...', 'info');
+    showToast(t('toast.requestSent'), 'info');
 }
 
 // ─── Incoming Borrow Request (deduplicate by from_id) ───
@@ -454,7 +481,7 @@ function handleIncomingRequest(payload) {
     // Re-render team list to show inline buttons
     renderTeamList();
 
-    window.api.showNotification('Cursor Share', `${from_email} 申请借用你的额度`);
+    window.api.showNotification('Cursor Share', t('notify.borrowRequest', { email: from_email }));
 }
 
 async function approveBorrow(fromId) {
@@ -463,7 +490,7 @@ async function approveBorrow(fromId) {
 
     const credResult = await window.api.getCredentials();
     if (!credResult.ok) {
-        showToast('读取凭证失败', 'error');
+        showToast(t('toast.credsFail'), 'error');
         return;
     }
 
@@ -474,7 +501,7 @@ async function approveBorrow(fromId) {
 
     const encResult = await window.api.encryptToken(tokenData, notif.pub_key);
     if (!encResult.ok) {
-        showToast('加密失败: ' + encResult.error, 'error');
+        showToast(t('toast.encryptFail', { error: encResult.error }), 'error');
         return;
     }
 
@@ -486,7 +513,7 @@ async function approveBorrow(fromId) {
     state.notifications.delete(fromId);
     renderTeamList();
 
-    showToast(`已同意 ${notif.from_email} 的借用请求`, 'success');
+    showToast(t('toast.approved', { email: notif.from_email }), 'success');
 }
 
 async function rejectBorrow(fromId) {
@@ -495,13 +522,13 @@ async function rejectBorrow(fromId) {
 
     await window.api.wsSend('REJECT_BORROW', {
         requester_id: fromId,
-        reason: '对方拒绝了你的借用请求。',
+        reason: t('server.defaultReject'),
     });
 
     state.notifications.delete(fromId);
     renderTeamList();
 
-    showToast(`已拒绝 ${notif.from_email} 的请求`, 'info');
+    showToast(t('toast.rejected', { email: notif.from_email }), 'info');
 }
 
 // ─── Borrow Approved: Decrypt & Write Token ─────────────
@@ -510,13 +537,13 @@ async function handleBorrowApproved(payload) {
 
     const keyPair = state.pendingKeyPairs[donor_id];
     if (!keyPair) {
-        showToast('密钥丢失，无法解密', 'error');
+        showToast(t('toast.keyLost'), 'error');
         return;
     }
 
     const decResult = await window.api.decryptToken(encrypted_token, keyPair.privateKey);
     if (!decResult.ok) {
-        showToast('Token 解密失败', 'error');
+        showToast(t('toast.decryptFail'), 'error');
         return;
     }
 
@@ -527,7 +554,7 @@ async function handleBorrowApproved(payload) {
 
     const writeResult = await window.api.writeToken(tokenData.accessToken, tokenData.refreshToken);
     if (!writeResult.ok) {
-        showToast('写入 Token 失败: ' + writeResult.error, 'error');
+        showToast(t('toast.writeFail', { error: writeResult.error }), 'error');
         return;
     }
 
@@ -544,21 +571,21 @@ async function handleBorrowApproved(payload) {
         const result = await window.api.showDialog({
             type: 'info',
             title: 'Cursor Share',
-            message: `${donor_email} 已同意你的额度借用`,
-            detail: '重启 Cursor 客户端会自动生效，且行且珍惜 🙏',
-            buttons: ['立即重启 Cursor', '稍后重启'],
+            message: t('dialog.borrowApproved.message', { email: donor_email }),
+            detail: t('dialog.borrowApproved.detail'),
+            buttons: [t('dialog.restartCursor'), t('dialog.restartLater')],
         });
         if (result.data === 0) {
-            showToast('正在重启 Cursor...', 'info');
+            showToast(t('toast.restartingCursor'), 'info');
             await window.api.restartCursor();
         }
     } else {
         await window.api.showDialog({
             type: 'info',
             title: 'Cursor Share',
-            message: '借用额度成功 🎉',
-            detail: `你正在使用 ${donor_email} 的 Cursor 额度，且行且珍惜 🙏`,
-            buttons: ['我知道了'],
+            message: t('dialog.borrowSuccess.message'),
+            detail: t('dialog.borrowSuccess.detail', { email: donor_email }),
+            buttons: [t('dialog.ok')],
         });
     }
 
@@ -566,16 +593,16 @@ async function handleBorrowApproved(payload) {
 }
 
 function handleBorrowRejected(payload) {
-    window.api.showNotification('Cursor Share', `${payload.donor_email} 拒绝了你的借用请求`);
+    window.api.showNotification('Cursor Share', t('notify.borrowRejected', { email: payload.donor_email }));
     delete state.pendingKeyPairs[payload.donor_id];
 }
 
 function handleBorrowerActivated(payload) {
-    window.api.showNotification('Cursor Share', `${payload.borrower_email} 已成功激活你的共享额度`);
+    window.api.showNotification('Cursor Share', t('notify.borrowerActivated', { email: payload.borrower_email }));
 }
 
 function handleBorrowerReturned(payload) {
-    window.api.showNotification('Cursor Share', `${payload.borrower_email} 已归还你的额度`);
+    window.api.showNotification('Cursor Share', t('notify.borrowerReturned', { email: payload.borrower_email }));
 }
 
 // ─── KICKED_OUT: Auto-restore ───────────────────────────
@@ -594,13 +621,13 @@ async function handleKickedOut(payload) {
 
     const result = await window.api.showDialog({
         type: 'warning',
-        title: 'Cursor Share — 额度被收回',
-        message: `${by_email} 已收回共享额度`,
-        detail: '你的原始账号已自动恢复。需要重启 Cursor 客户端以切换回自己的账号。',
-        buttons: isCursorRunning ? ['立即重启 Cursor', '稍后重启'] : ['我知道了'],
+        title: t('dialog.kicked.title'),
+        message: t('dialog.kicked.message', { email: by_email }),
+        detail: t('dialog.kicked.detail'),
+        buttons: isCursorRunning ? [t('dialog.restartCursor'), t('dialog.restartLater')] : [t('dialog.ok')],
     });
     if (isCursorRunning && result.data === 0) {
-        showToast('正在重启 Cursor...', 'info');
+        showToast(t('toast.restartingCursor'), 'info');
         await window.api.restartCursor();
     }
 
@@ -611,17 +638,17 @@ async function handleKickedOut(payload) {
 async function handleRevoke() {
     const result = await window.api.showDialog({
         type: 'warning',
-        title: 'Cursor Share — 强制踢出',
-        message: '确认要刷新 Token 并踢出所有借用者？',
-        detail: '将调用 Cursor 服务器刷新 Token，旧 Token 立即失效。借用者将无法继续使用你的额度。',
-        buttons: ['确认踢出', '取消'],
+        title: t('dialog.revoke.title'),
+        message: t('dialog.revoke.message'),
+        detail: t('dialog.revoke.detail'),
+        buttons: [t('dialog.revoke.confirm'), t('tray.forceKick.cancel')],
     });
     if (result.data !== 0) return;
 
     // 1. Refresh token via Cursor API (core action)
     const refreshResult = await window.api.refreshToken();
     if (!refreshResult.ok) {
-        showToast('Token 刷新失败: ' + refreshResult.error, 'error');
+        showToast(t('toast.refreshFail', { error: refreshResult.error }), 'error');
         return;
     }
 
@@ -635,12 +662,12 @@ async function handleRevoke() {
     const restartResult = await window.api.showDialog({
         type: 'info',
         title: 'Cursor Share',
-        message: '强制踢出成功 ✅',
-        detail: 'Token 已在 Cursor 服务器端刷新，旧 Token 已失效。重启 Cursor 后使用新 Token。',
-        buttons: isCursorRunning ? ['立即重启 Cursor', '稍后重启'] : ['我知道了'],
+        message: t('dialog.revoke.success'),
+        detail: t('dialog.revoke.successDetail'),
+        buttons: isCursorRunning ? [t('dialog.restartCursor'), t('dialog.restartLater')] : [t('dialog.ok')],
     });
     if (isCursorRunning && restartResult.data === 0) {
-        showToast('正在重启 Cursor...', 'info');
+        showToast(t('toast.restartingCursor'), 'info');
         await window.api.restartCursor();
     }
 
@@ -653,19 +680,19 @@ async function handleRestore() {
         await window.api.showDialog({
             type: 'info',
             title: 'Cursor Share',
-            message: '你正在使用自己的账号',
-            detail: '当前没有借用记录，无需恢复。',
-            buttons: ['确定'],
+            message: t('dialog.restore.usingOwn'),
+            detail: t('dialog.restore.usingOwnDetail'),
+            buttons: [t('dialog.ok')],
         });
         return;
     }
 
     const result = await window.api.showDialog({
         type: 'warning',
-        title: 'Cursor Share — 恢复账号',
-        message: '确认要恢复自己的账号？',
-        detail: '这将结束当前的借用，归还对方的额度。',
-        buttons: ['确认恢复', '取消'],
+        title: t('dialog.restore.title'),
+        message: t('dialog.restore.message'),
+        detail: t('dialog.restore.detail'),
+        buttons: [t('dialog.restore.confirm'), t('tray.forceKick.cancel')],
     });
     if (result.data !== 0) return;
 
@@ -674,7 +701,7 @@ async function handleRestore() {
 
     const restoreResult = await window.api.restoreBackup();
     if (!restoreResult.ok) {
-        showToast('恢复失败: ' + restoreResult.error, 'error');
+        showToast(t('toast.restoreFail', { error: restoreResult.error }), 'error');
         return;
     }
 
@@ -689,21 +716,21 @@ async function handleRestore() {
         const restartResult = await window.api.showDialog({
             type: 'info',
             title: 'Cursor Share',
-            message: '账号已恢复',
-            detail: '你的原始 Token 已写回。重启 Cursor 客户端后生效。',
-            buttons: ['立即重启 Cursor', '稍后重启'],
+            message: t('dialog.restore.success'),
+            detail: t('dialog.restore.successDetail'),
+            buttons: [t('dialog.restartCursor'), t('dialog.restartLater')],
         });
         if (restartResult.data === 0) {
-            showToast('正在重启 Cursor...', 'info');
+            showToast(t('toast.restartingCursor'), 'info');
             await window.api.restartCursor();
         }
     } else {
         await window.api.showDialog({
             type: 'info',
             title: 'Cursor Share',
-            message: '账号已恢复 ✅',
-            detail: '你的原始 Token 已写回，下次启动 Cursor 将使用自己的账号。',
-            buttons: ['我知道了'],
+            message: t('dialog.restore.successOffline'),
+            detail: t('dialog.restore.successOfflineDetail'),
+            buttons: [t('dialog.ok')],
         });
     }
 

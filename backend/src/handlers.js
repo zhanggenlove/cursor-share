@@ -13,7 +13,7 @@ function handleJoin(ws, payload) {
     if (!id || !email || !roomId || !password) {
         ws.send(JSON.stringify({
             action: 'JOIN_FAILED',
-            payload: { reason: '缺少必要参数 (id, email, roomId, password)' },
+            payload: { reason: 'Missing required parameters (id, email, roomId, password)' },
         }));
         return null;
     }
@@ -24,7 +24,7 @@ function handleJoin(ws, payload) {
         if (!state.verifyPassword(password, room.passwordHash)) {
             ws.send(JSON.stringify({
                 action: 'JOIN_FAILED',
-                payload: { reason: '房间密码错误' },
+                payload: { reason: 'Wrong room password' },
             }));
             return null;
         }
@@ -69,7 +69,7 @@ function handleRequestBorrow(clientId, payload) {
     const target = state.getClient(target_id);
 
     if (!target) {
-        sendTo(clientId, 'REQUEST_FAILED', { reason: '目标用户不在线' });
+        sendTo(clientId, 'REQUEST_FAILED', { reason: 'Target user is not online' });
         return;
     }
 
@@ -77,7 +77,7 @@ function handleRequestBorrow(clientId, payload) {
     const requesterRoom = state.getRoomByClientId(clientId);
     const targetRoom = state.getRoomByClientId(target_id);
     if (!requesterRoom || !targetRoom || requesterRoom.roomId !== targetRoom.roomId) {
-        sendTo(clientId, 'REQUEST_FAILED', { reason: '目标用户不在同一房间' });
+        sendTo(clientId, 'REQUEST_FAILED', { reason: 'Target user is not in the same room' });
         return;
     }
 
@@ -120,7 +120,7 @@ function handleRejectBorrow(donorId, payload) {
     sendTo(requester_id, 'BORROW_REJECTED', {
         donor_id: donorId,
         donor_email: donor.email,
-        reason: reason || '对方拒绝了你的请求',
+        reason: reason || 'The other party rejected your request',
     });
 }
 

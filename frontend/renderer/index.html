@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,52 +14,52 @@
         <div class="room-container">
             <div class="room-logo"><img src="../assets/icon-32@2x.png" alt="Cursor Share" class="logo-icon"></div>
             <h1 class="room-title">Cursor Share</h1>
-            <p class="room-subtitle">选择一个方式加入团队</p>
+            <p class="room-subtitle" data-i18n="room.subtitle">Choose a way to join your team</p>
 
             <!-- Server Address (shared between tabs) -->
             <div class="room-field server-field">
-                <label>服务器地址</label>
+                <label data-i18n="room.serverLabel">Server Address</label>
                 <input id="serverUrl" type="text" placeholder="ws://192.168.x.x:8080" value="ws://120.48.12.81:8080">
             </div>
 
             <!-- Tab Switcher -->
             <div class="room-tabs">
-                <button id="tabCreate" class="room-tab active" data-tab="create">创建房间</button>
-                <button id="tabJoin" class="room-tab" data-tab="join">加入房间</button>
+                <button id="tabCreate" class="room-tab active" data-tab="create" data-i18n="room.tabCreate">Create Room</button>
+                <button id="tabJoin" class="room-tab" data-tab="join" data-i18n="room.tabJoin">Join Room</button>
             </div>
 
             <!-- Create Room Panel -->
             <div id="panelCreate" class="room-panel active">
                 <div class="room-field">
-                    <label>团队名称</label>
-                    <input id="createName" type="text" placeholder="例如：前端组" maxlength="20">
+                    <label data-i18n="room.teamName">Team Name</label>
+                    <input id="createName" type="text" data-i18n-placeholder="room.teamNamePlaceholder" placeholder="e.g. Frontend Team" maxlength="20">
                 </div>
                 <div id="createResult" class="room-result hidden">
                     <div class="room-result-item">
-                        <span class="room-result-label">房间码</span>
+                        <span class="room-result-label" data-i18n="room.roomCode">Room Code</span>
                         <span id="createRoomId" class="room-result-value"></span>
                     </div>
                     <div class="room-result-item">
-                        <span class="room-result-label">密码</span>
+                        <span class="room-result-label" data-i18n="room.password">Password</span>
                         <span id="createPassword" class="room-result-value"></span>
                     </div>
-                    <button id="btnCopyRoomInfo" class="btn btn-outline room-btn-small" style="margin-top:8px;width:100%;">📋 一键复制房间信息</button>
+                    <button id="btnCopyRoomInfo" class="btn btn-outline room-btn-small" style="margin-top:8px;width:100%;" data-i18n="room.copyBtn">📋 Copy Room Info</button>
                 </div>
-                <button id="btnCreateRoom" class="btn btn-primary room-btn">生成房间</button>
-                <button id="btnEnterCreated" class="btn btn-primary room-btn hidden">进入房间</button>
+                <button id="btnCreateRoom" class="btn btn-primary room-btn" data-i18n="room.generateBtn">Generate Room</button>
+                <button id="btnEnterCreated" class="btn btn-primary room-btn hidden" data-i18n="room.enterBtn">Enter Room</button>
             </div>
 
             <!-- Join Room Panel -->
             <div id="panelJoin" class="room-panel">
                 <div class="room-field">
-                    <label>房间码</label>
-                    <input id="joinRoomId" type="text" placeholder="输入房间码">
+                    <label data-i18n="room.roomCode">Room Code</label>
+                    <input id="joinRoomId" type="text" data-i18n-placeholder="room.roomCodePlaceholder" placeholder="Enter room code">
                 </div>
                 <div class="room-field">
-                    <label>密码</label>
-                    <input id="joinPassword" type="text" placeholder="输入密码">
+                    <label data-i18n="room.password">Password</label>
+                    <input id="joinPassword" type="text" data-i18n-placeholder="room.passwordPlaceholder" placeholder="Enter password">
                 </div>
-                <button id="btnJoinRoom" class="btn btn-primary room-btn">加入房间</button>
+                <button id="btnJoinRoom" class="btn btn-primary room-btn" data-i18n="room.joinBtn">Join Room</button>
             </div>
 
             <div id="roomError" class="room-error hidden"></div>
@@ -75,32 +75,32 @@
                 <span class="app-title">Cursor Share</span>
             </div>
             <div class="header-right">
-                <span id="connectionDot" class="connection-dot offline" title="未连接"></span>
+                <span id="connectionDot" class="connection-dot offline" data-i18n-title="app.disconnected" title="Disconnected"></span>
             </div>
         </header>
 
         <!-- Room Info Bar -->
         <div class="room-info-bar">
             <span>🏠 <span id="roomNameDisplay">--</span></span>
-            <button id="btnSwitchRoom" class="btn-switch-room">切换</button>
+            <button id="btnSwitchRoom" class="btn-switch-room" data-i18n="app.switchBtn">Switch</button>
         </div>
 
         <!-- My Account Section -->
         <section class="section account-section">
             <div class="account-info">
                 <div class="account-email">
-                    <span class="label">👤 当前账号</span>
-                    <span id="userEmail" class="value">加载中...</span>
+                    <span class="label" data-i18n="app.currentAccount">👤 Current Account</span>
+                    <span id="userEmail" class="value" data-i18n="app.loading">Loading...</span>
                 </div>
                 <div id="borrowingBadge" class="borrowing-badge hidden">
-                    🔗 正在使用 <span id="borrowingFrom"></span> 的额度
+                    <span id="borrowingBadgeText">🔗 Using <span id="borrowingFrom"></span>'s quota</span>
                 </div>
             </div>
             <div class="quota-display">
                 <div class="quota-header">
                     <div style="display:flex;align-items:center;gap:6px;">
-                        <span class="label">✨ Cursor 额度</span>
-                        <div id="btnRefreshQuota" class="btn-icon" title="刷新额度">
+                        <span class="label" data-i18n="app.cursorQuota">✨ Cursor Quota</span>
+                        <div id="btnRefreshQuota" class="btn-icon" data-i18n-title="app.refreshQuota" title="Refresh Quota">
                             <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 1v5h5"/><path d="M3.5 10a5 5 0 1 0 1-7L1 6"/>
                             </svg>
@@ -117,25 +117,26 @@
         <!-- Team Directory -->
         <section class="section team-section">
             <div class="section-header">
-                <span>👥 团队在线</span>
+                <span data-i18n="app.teamOnline">👥 Team Online</span>
                 <span id="onlineCount" class="online-count">0</span>
             </div>
             <div id="teamList" class="team-list">
-                <div class="empty-state">等待连接服务器...</div>
+                <div class="empty-state" data-i18n="app.waitingServer">Waiting for server connection...</div>
             </div>
         </section>
 
         <!-- Footer Actions -->
         <footer class="app-footer">
-            <button id="btnRevoke" class="btn btn-danger" title="刷新Token，强制踢出所有借用者">
-                💥 强制踢出
+            <button id="btnRevoke" class="btn btn-danger" data-i18n-title="app.forceKickTitle" title="Refresh Token, force kick all borrowers" data-i18n="app.forceKickBtn">
+                💥 Force Kick
             </button>
-            <button id="btnRestore" class="btn btn-secondary" title="恢复本地账号，结束借用">
-                🚪 恢复本账号
+            <button id="btnRestore" class="btn btn-secondary" data-i18n-title="app.restoreTitle" title="Restore local account, end borrowing" data-i18n="app.restoreBtn">
+                🚪 Restore My Account
             </button>
         </footer>
     </div>
 
+    <script src="../lib/i18n.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
