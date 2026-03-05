@@ -94,27 +94,27 @@ Cursor Share's core design principle: **Token never passes through any third par
 ```mermaid
 flowchart TD
     A[Launch Cursor Share] --> B{First time?}
-    B -->|Yes| C[Create room → Get room code + password]
+    B -->|Yes| C[Create room - Get room code + password]
     B -->|No| D[Join existing room]
-    C --> E[📋 Copy room info to share with team]
+    C --> E[Copy room info to share with team]
     E --> F[Enter room]
     D --> F
 
     F --> G[View team online members and quota]
 
     G --> H{Need quota?}
-    H -->|Yes| I[Click "Borrow" to request quota]
-    I --> J[Other party receives notification: Approve/Reject]
-    J -->|Approve| K[Token encrypted transfer → Written locally]
+    H -->|Yes| I[Click Borrow to request quota]
+    I --> J[Other party receives notification]
+    J -->|Approve| K[Token encrypted transfer - Written locally]
     K --> L[Restart Cursor to activate]
 
     H -->|No| M{Someone borrowing your quota?}
     M -->|Yes| N{Need to revoke?}
-    N -->|Yes| O[Force Kick → Refresh Token → Old Token invalidated]
+    N -->|Yes| O[Force Kick - Refresh Token - Old Token invalidated]
     N -->|No| P[Continue sharing]
 
-    L --> Q[Done → Restore your account]
-    Q --> R[Original Token written back → Restart Cursor]
+    L --> Q[Done - Restore your account]
+    Q --> R[Original Token written back - Restart Cursor]
 ```
 
 ### Force Kick Flow
@@ -127,14 +127,14 @@ sequenceDiagram
     participant DB as Local SQLite
     participant WS as WebSocket
 
-    U->>App: Click "Force Kick"
+    U->>App: Click Force Kick
     App->>DB: Read refreshToken
     App->>API: POST /oauth/token (refresh_token)
-    API-->>App: New access_token ✅
+    API-->>App: New access_token
     Note over API: Old Token immediately invalidated
     App->>DB: Write new accessToken
-    App-->>WS: Notify borrowers (best effort)
-    App->>U: Prompt: Token refreshed, restart Cursor to take effect
+    App-->>WS: Notify borrowers - best effort
+    App->>U: Prompt - Token refreshed, restart Cursor to take effect
 ```
 
 ---
@@ -262,3 +262,10 @@ A: No. Force Kick calls Cursor's official API to refresh your Token. The old Tok
 
 **Q: Can the server see the Token?**
 A: No. The Token is encrypted with the borrower's RSA public key locally before transfer. The server only relays encrypted data and cannot decrypt it.
+
+**Q: macOS shows "app is damaged" or "can't be opened" error?**
+A: This is caused by macOS Gatekeeper quarantine. Run the following command in Terminal to fix it:
+```bash
+sudo xattr -r -d com.apple.quarantine /Applications/Cursor\ Share.app
+```
+If the app is not in `/Applications`, replace the path with the actual location of the app.
